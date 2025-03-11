@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ie.tus.eng.tshop_services_JPA.customer.model.CustomerResponse;
@@ -15,36 +16,41 @@ import ie.tus.eng.tshop_services_JPA.orders.Orders;
 import ie.tus.eng.tshop_services_JPA.orders.OrdersClient;
 
 @RestController
+@RequestMapping("/customers") // Base URL applies to all endpoints
 public class CustomerResource {
-	CustomerRepository repository;
-	private OrdersClient ordersClient;
-	
-	@Autowired
-	public CustomerResource(CustomerRepository repository, OrdersClient ordersClient) {
-		this.repository = repository;
-		this.ordersClient = ordersClient;
-	}
-	
-	// GET ALL
-		@GetMapping("/customers")
-		public List<Customers> retireveAllCustomers() {
-			return repository.findAll();
-		}
+    private final CustomerRepository repository;
+    private final OrdersClient ordersClient;
 
-//		//GET by ID
-		@GetMapping("/customers/{custId}")
-		public ResponseEntity<CustomerResponse> retrieveCustomers(@PathVariable int custId) {
-			Optional<Customers> customers = repository.findById(custId);
+    @Autowired
+    public CustomerResource(CustomerRepository repository, OrdersClient ordersClient) {
+        this.repository = repository;
+        this.ordersClient = ordersClient;
+    }
 
-			if (customers.isEmpty()) {
-				System.out.println("Customer not found in the database");
-				return ResponseEntity.notFound().build();
-			} else {
-				Orders orders = ordersClient.getOrdersById(customers.get().getOrderId());
-				CustomerResponse customerResponse = new CustomerResponse(customers.get(), orders);
-				return ResponseEntity.ok(customerResponse); // use dot after response entity to complete lab
-			}
-		}
+    // GET all customers
+    @GetMapping
+    public List<Customers> retrieveAllCustomers() {
+        return repository.findAll();
+    }
 
-	
+    // GET customer by ID
+    @GetMapping("/{custId}") // Fix duplicate path issue
+    public ResponseEntity<CustomerResponse> retrieveCustomers(@PathVariable int custId) {
+        Optional<Customers> customers = repository.findById(custId);
+
+        if (customers.isEmpty()) {
+            System.out.println("Customer not found in the database");
+            return ResponseEntity.notFound().build();
+        } else {
+            Orders orders = ordersClient.getOrdersById(customers.get().getOrderId());
+
+            if (orders == null) {
+                System.out.println("Order service is unreachable or order not found.");
+                orders = new Orders(0, "No items", 0); // Provide default Orders object
+            }
+
+            CustomerResponse customerResponse = new CustomerResponse(customers.get(), orders);
+            return ResponseEntity.ok(customerResponse);
+        }
+    }
 }

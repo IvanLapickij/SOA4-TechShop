@@ -1,7 +1,5 @@
 package ie.tus.eng.tshop_services_JPA.customer.model;
 
-import java.time.LocalDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,19 +8,19 @@ import jakarta.persistence.Id;
 public class Customers {
 	
 	@Id
-	@Column(name = "CUSTID")
+	@Column(name = "custid")  // Lowercase column name
 	private int custId;
 	
-	@Column(name="CUSTNAME")
+	@Column(name="custname")
 	private String custName;
 	
-	@Column(name="CUSTBOD")
+	@Column(name="custbod")
 	private String custBod;
 	
-	@Column(name="CUSTPHONE")
+	@Column(name="custphone")
 	private String custPhone;
 	
-	@Column(name="ORDERID")
+	@Column(name="orderid")
 	private int orderId;
 
 	public int getCustId() {
@@ -67,17 +65,11 @@ public class Customers {
 
 	@Override
 	public String toString() {
-		return "Customers [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod + ", custPhone="
+		return "Customers [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod + ", custPhone=" 
 				+ custPhone + ", orderId=" + orderId + "]";
 	}
 
 	public Customers() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
-
-	
-
-	
 }
-
