@@ -14,6 +14,7 @@ import ie.tus.eng.tshop_services_JPA.customer.model.CustomerResponse;
 import ie.tus.eng.tshop_services_JPA.customer.model.Customers;
 import ie.tus.eng.tshop_services_JPA.orders.Orders;
 import ie.tus.eng.tshop_services_JPA.orders.OrdersClient;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/customers") // Base URL applies to all endpoints
@@ -28,9 +29,15 @@ public class CustomerResource {
     }
 
     // GET all customers
+//    @GetMapping
+//    public List<Customers> retrieveAllCustomers() {
+//        return repository.findAll();
+//    }
+    
+    // Non-blocking request
     @GetMapping
-    public List<Customers> retrieveAllCustomers() {
-        return repository.findAll();
+    public Flux<Customers> getAllCustomers() {
+        return Flux.fromIterable(repository.findAll());
     }
 
     // GET customer by ID
