@@ -1,44 +1,34 @@
-function fetchCustomerInfo() {
-    const url = '/customers'; // Make sure your Spring Boot controller maps this route
-
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Error getting data from the server.");
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data) {
-            populateTable(data);
-        }
-    })
-    .catch(error => console.error('Error fetching customer info:', error));
-}
-
-// Function to populate the table with data
-function populateTable(customers) {
-    const tableBody = document.getElementById('customerTable');
-    tableBody.innerHTML = ''; // Clear previous data
-
-    customers.forEach(customer => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${customer.custId}</td>
-            <td>${customer.custName}</td>
-            <td>${customer.custBod}</td>
-            <td>${customer.custPhone}</td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
-
-// When the DOM is fully loaded, fetch customer data
 document.addEventListener("DOMContentLoaded", () => {
-    fetchCustomerInfo();
+  // Fetch from the combined endpoint (adjust path if needed)
+  fetch("/customers/all-with-orders")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Error fetching data");
+      }
+      return response.json();
+    })
+    .then(customerResponses => {
+      populateTable(customerResponses);
+    })
+    .catch(error => console.error("Fetch Error:", error));
 });
+
+function populateTable(customerResponses) {
+  const tableBody = document.getElementById("customerTable");
+  tableBody.innerHTML = ""; // clear old rows
+
+  customerResponses.forEach(cr => {
+    // 'cr' is your CustomerResponse with both customer info and an 'orders' object
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${cr.custId}</td>
+      <td>${cr.custName}</td>
+      <td>${cr.custBod}</td>
+      <td>${cr.custPhone}</td>
+      <td>${cr.orders.orderId}</td>
+      <td>${cr.orders.items}</td>
+      <td>${cr.orders.price}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+}

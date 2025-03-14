@@ -1,37 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="main.js" defer></script>
-    <title>Technology Shop</title>
+  <meta charset="UTF-8">
+  <title>Technology Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- W3CSS -->
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <!-- Optional Fonts & Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Your JS (if any) -->
+  <script src="main.js" defer></script>
 </head>
-<body>
+<body class="w3-dark-grey">
 
-    <div class="w3-container">
-        <h5>Customers</h5>
-        <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Birth Date</th>
-                    <th>Phone</th>
-                </tr>
-            </thead>
-            <tbody id="customerTable">
-                <!-- Customer data will be inserted here -->
-            </tbody>
-        </table>
-        <br>
-        <button class="w3-button w3-dark-grey" onclick="fetchCustomerInfo()">
-            More Customers <i class="fa fa-arrow-right"></i>
-        </button>
+  <!-- Left Column: Customers & Orders -->
+  <div class="w3-half">
+    <div class="w3-container w3-margin-top">
+      <h5>Customers and Orders</h5>
+      <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+        <thead>
+          <tr class="w3-dark-grey">
+            <th>Customer ID</th>
+            <th>Name</th>
+            <th>Birth Date</th>
+            <th>Phone</th>
+            <th>Order ID</th>
+            <th>Items</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody id="customerTable">
+          <!-- Data inserted here (if using JS or server-generated rows) -->
+        </tbody>
+      </table>
+
+      <!-- Status / Info -->
+      <p class="w3-text-white">Status Code: <span id="statusCode">-</span></p>
+      <p class="w3-text-white">Some text here...</p>
     </div>
+  </div>
+
+  <!-- Right Column: Add / Edit Student -->
+  <div class="w3-half">
+    <div class="w3-container w3-margin-top">
+
+      <!-- Add New Student -->
+      <h5>Add New Student</h5>
+      <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+        <thead>
+          <tr class="w3-dark-grey">
+            <th>Name</th>
+            <th>Birth Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <input 
+                class="w3-input w3-border" 
+                type="text" 
+                placeholder="Enter Name" 
+                id="newStudentName"
+              />
+            </td>
+            <td>
+              <input 
+                class="w3-input w3-border" 
+                type="date" 
+                id="newStudentBirthDate"
+              />
+            </td>
+            <td>
+              <button class="w3-button w3-dark-grey">Add Student</button>
+              <span class="w3-small">(Status code here)</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Edit Student -->
+      <h5 class="w3-margin-top">Edit Student</h5>
+      <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+        <thead>
+          <tr class="w3-dark-grey">
+            <th>ID</th>
+            <th>Name</th>
+            <th>Birth Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <input 
+                class="w3-input w3-border" 
+                type="text" 
+                placeholder="Enter ID" 
+                id="editStudentId"
+              />
+            </td>
+            <td>
+              <input 
+                class="w3-input w3-border" 
+                type="text" 
+                placeholder="Enter New Name" 
+                id="editStudentName"
+              />
+            </td>
+            <td>
+              <input 
+                class="w3-input w3-border" 
+                type="date" 
+                id="editStudentBirthDate"
+              />
+            </td>
+            <td>
+              <button class="w3-button w3-dark-grey">Edit Student</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
 
 </body>
 </html>

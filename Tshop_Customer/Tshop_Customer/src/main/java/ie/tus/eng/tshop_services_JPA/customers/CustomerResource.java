@@ -35,6 +35,15 @@ public class CustomerResource {
         return Flux.fromIterable(repository.findAll());
     }
 
+    @GetMapping("/all-with-orders")
+    public Flux<CustomerResponse> getAllCustomersWithOrders() {
+        return Flux.fromIterable(repository.findAll())
+                   .flatMap(customer ->
+                       ordersClient.getOrder(customer.getOrderId()) // non-blocking call
+                           .map(order -> new CustomerResponse(customer, order))
+                   );
+    }
+
     @GetMapping("/{custId}")
     public Mono<CustomerResponse> getCustomer(@PathVariable int custId) {
         return Mono.fromCallable(() -> repository.findById(custId))
