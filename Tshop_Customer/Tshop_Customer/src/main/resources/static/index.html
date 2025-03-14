@@ -3,23 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technology Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="main.js" defer></script>
+    <title>Technology Shop</title>
 </head>
 <body>
-    <h1>Customer List</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Birth Date</th>
-                <th>Phone</th>
-            </tr>
-        </thead>
-        <tbody id="customerTable">
-            <!-- Data will be inserted here -->
-        </tbody>
-    </table>
+
+    <div class="w3-container">
+        <h5>Customers</h5>
+        <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Birth Date</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody id="customerTable">
+                <!-- Customer data will be inserted here -->
+            </tbody>
+        </table>
+        <br>
+        <button class="w3-button w3-dark-grey" onclick="fetchCustomerInfo()">
+            More Customers <i class="fa fa-arrow-right"></i>
+        </button>
+    </div>
+
 </body>
 </html>
