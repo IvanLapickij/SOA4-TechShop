@@ -1,63 +1,45 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Fetch from the combined endpoint (adjust path if needed)
-  fetch("/customers/all-with-orders")
+// Global variable to store the last known ETag
+let cachedEtag = "";
+
+// -----------------------------
+// 1) Refresh/GET Customers
+// -----------------------------
+function refreshCustomers() {
+  fetch("/customers/all-with-orders", {
+    headers: {
+      "If-None-Match": cachedEtag
+    }
+  })
     .then(response => {
-      if (!response.ok) {
-        throw new Error("Error fetching data");
+      document.getElementById("statusCode").textContent = response.status;
+      const newEtag = response.headers.get("ETag");
+      document.getElementById("etagValue").textContent = newEtag || "-";
+
+      if (response.status === 304) {
+        toastr.info('No new data available (304 Not Modified).', 'Refresh');
+        return null;
       }
+      if (newEtag) {
+        cachedEtag = newEtag; 
+      }
+      toastr.success('Data refreshed successfully.', 'Refresh');
       return response.json();
     })
-    .then(customerResponses => {
-      populateTable(customerResponses);
+    .then(data => {
+      if (data) populateTable(data);
     })
-    .catch(error => console.error("Fetch Error:", error));
-});
-
-function populateTable(customerResponses) {
-  const tableBody = document.getElementById("customerTable");
-  tableBody.innerHTML = ""; // clear old rows
-
-  customerResponses.forEach(cr => {
-    // 'cr' is your CustomerResponse with both customer info and an 'orders' object
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${cr.custId}</td>
-      <td>${cr.custName}</td>
-      <td>${cr.custBod}</td>
-      <td>${cr.custPhone}</td>
-      <td>${cr.orders.orderId}</td>
-      <td>${cr.orders.items}</td>
-      <td>${cr.orders.price}</td>
-    `;
-    tableBody.appendChild(row);
-  });
+    .catch(error => {
+      toastr.error('Error refreshing data.', 'Refresh');
+      console.error("Error:", error);
+    });
 }
 
-// Load table data on page load
-document.addEventListener("DOMContentLoaded", () => {
-  fetchCustomerOrders(); // fetches combined customer+order data
-});
-
-// GET All Customers + Orders
-function fetchCustomerOrders() {
-  fetch("/customers/all-with-orders") // your combined endpoint
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Error fetching data");
-      }
-      return response.json();
-    })
-    .then(customerResponses => {
-      populateTable(customerResponses);
-    })
-    .catch(error => console.error("Fetch Error:", error));
-}
-
+// Helper to populate the table
 function populateTable(customerResponses) {
   const tableBody = document.getElementById("customerTable");
   tableBody.innerHTML = "";
-
   customerResponses.forEach(cr => {
+    // cr = { custId, custName, custBod, custPhone, orders: { orderId, items, price } }
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${cr.custId}</td>
@@ -72,95 +54,109 @@ function populateTable(customerResponses) {
   });
 }
 
-// POST: Add a New Student
-function addStudent() {
-  const name = document.getElementById("newStudentName").value;
-  const birthDate = document.getElementById("newStudentBirthDate").value;
+// -----------------------------
+// 2) POST: Add a new Customer
+// -----------------------------
+function addCustomer() {
+  const name = document.getElementById("newCustomerName").value;
+  const birthDate = document.getElementById("newCustomerBirthDate").value;
+  const phone = document.getElementById("newCustomerPhone").value;
 
-  // Build a JSON object matching your "Customers" entity
-  const newStudent = {
-    custId: 0,           // or auto-gen in DB
+  const newCustomer = {
     custName: name,
     custBod: birthDate,
-    custPhone: "0000000", // or a real phone from a form if needed
-    orderId: 11          // if relevant
+    custPhone: phone,
+    orderId: 1
   };
 
   fetch("/customers", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(newStudent)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newCustomer)
   })
     .then(response => {
       if (!response.ok) {
-        throw new Error("Failed to add student");
+        throw new Error("Failed to add customer. Status: " + response.status);
       }
-      document.getElementById("addStatus").textContent = "(Status: " + response.status + ")";
-      // Refresh the table to show the newly added student
-      return fetchCustomerOrders();
+      document.getElementById("addStatus").textContent = `(Status: ${response.status})`;
+      toastr.success('Customer added successfully!', 'Add');
+      return refreshCustomers();
     })
     .catch(error => {
-      document.getElementById("addStatus").textContent = "(Error adding student)";
+      document.getElementById("addStatus").textContent = "(Error adding customer)";
+      toastr.error('Error adding customer.', 'Add');
       console.error(error);
     });
 }
 
-// DELETE: Remove a Student by ID
-function deleteStudent() {
-  const studentId = document.getElementById("deleteStudentId").value;
+// -----------------------------
+// 3) PUT: Edit a Customer
+// -----------------------------
+function editCustomer() {
+  const id = document.getElementById("editCustomerId").value;
+  const name = document.getElementById("editCustomerName").value;
+  const birth = document.getElementById("editCustomerBirthDate").value;
+  const phone = document.getElementById("editCustomerPhone").value;
 
-  if (!studentId) {
-    alert("Please enter an ID to delete!");
+  if (!id) {
+    alert("Please enter a valid Customer ID to edit!");
     return;
   }
 
-  fetch("/customers/" + studentId, {
-    method: "DELETE"
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Delete failed");
-      }
-      document.getElementById("deleteStatus").textContent = "(Status: " + response.status + ")";
-      // Refresh table after delete
-      return fetchCustomerOrders();
-    })
-    .catch(error => {
-      document.getElementById("deleteStatus").textContent = "(Error deleting student)";
-      console.error(error);
-    });
-}
-function editStudent() {
-  const id = document.getElementById("editStudentId").value;
-  const name = document.getElementById("editStudentName").value;
-  const birth = document.getElementById("editStudentBirthDate").value; // now retrieves correct date input
-
-  const updatedStudent = {
+  const updatedCustomer = {
     custId: parseInt(id),
     custName: name,
     custBod: birth,
-    custPhone: "0000000", // or read from a separate input if needed
-    orderId: 11          // or from another input if relevant
+    custPhone: phone,
+    orderId: 1
   };
 
-  fetch("/customers/" + id, {
+  fetch(`/customers/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updatedStudent)
+    body: JSON.stringify(updatedCustomer)
   })
     .then(response => {
       if (!response.ok) {
-        throw new Error("Failed to update student: " + response.status);
+        throw new Error("Failed to update customer. Status: " + response.status);
       }
+      document.getElementById("editStatus").textContent = `(Status: ${response.status})`;
+      toastr.success('Customer updated successfully!', 'Edit');
       return response.json();
     })
-    .then(updated => {
-      console.log("Updated student:", updated);
-      // Refresh the table
-      fetchCustomerOrders();
+    .then(data => {
+      console.log("Updated customer:", data);
+      refreshCustomers();
     })
-    .catch(error => console.error(error));
+    .catch(error => {
+      document.getElementById("editStatus").textContent = "(Error editing customer)";
+      toastr.error('Error editing customer.', 'Edit');
+      console.error(error);
+    });
 }
 
+// -----------------------------
+// 4) DELETE: Remove a Customer
+// -----------------------------
+function deleteCustomer() {
+  const id = document.getElementById("deleteCustomerId").value;
+  if (!id) {
+    alert("Please enter a valid Customer ID to delete!");
+    return;
+  }
+
+  fetch(`/customers/${id}`, { method: "DELETE" })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Failed to delete customer. Status: " + response.status);
+      }
+      document.getElementById("deleteStatus").textContent = `(Status: ${response.status})`;
+      toastr.success('Customer deleted successfully!', 'Delete');
+      refreshCustomers();
+    })
+    .catch(error => {
+      document.getElementById("deleteStatus").textContent = "(Error deleting customer)";
+      toastr.error('Error deleting customer.', 'Delete');
+      console.error(error);
+    });
+}

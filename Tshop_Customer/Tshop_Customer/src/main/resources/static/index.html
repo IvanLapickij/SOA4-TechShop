@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" 
-      style="background: url('images/background.jpg') no-repeat center center; 
-             background-size: cover;">
+      style="background: url('images/background.jpg') no-repeat center center; background-size: cover;">
 <head>
   <meta charset="UTF-8">
   <title>Technology Shop</title>
@@ -12,31 +11,33 @@
 
   <!-- Optional Fonts & Icons -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-  <link rel="stylesheet" 
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <!-- Toastr CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
   <!-- Your JS -->
   <script src="main.js" defer></script>
 </head>
 
-<!-- Small font plus white text so it shows against the background -->
 <body class="w3-small" style="color: #bc5a0f; text-shadow:0.2px 0px 0 #444">
-<div class="w3-margin-top w3-center">
-    <h1 class="w3-xxlarge w3-text-white"><span class="w3-padding w3-black w3-opacity-min"><b>Only Robots</b></span></h1>
-      <h1 class="w3-xxlarge w3-text-white"><span class="w3-hide-small w3-text-light-grey">Online Electronics Store</span></h1>
+  <div class="w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white">
+      <span class="w3-padding w3-black w3-opacity-min"><b>Only Robots</b></span>
+    </h1>
+    <h1 class="w3-xxlarge w3-text-white">
+      <span class="w3-hide-small w3-text-light-grey">Online Electronics Store</span>
+    </h1>
   </div>
+  
   <div class="w3-container w3-margin-top">
-    <!-- Single row with two columns -->
     <div class="w3-row-padding">
-
+      
       <!-- FIRST COLUMN (TABLE) -->
       <div class="w3-col s12 l6">
-        <!-- Semi-transparent background for the card -->
-        <div class="w3-card w3-padding w3-margin-bottom"
-             style="background-color: rgba(0,0,0,0.2);">
+        <div class="w3-card w3-padding w3-margin-bottom" style="background-color: rgba(0,0,0,0.2);">
           <h4>Customers and Orders</h4>
-
-          <table class="w3-table-all w3-centered w3-hoverable w3-small" >
+          <table class="w3-table-all w3-centered w3-hoverable w3-small">
             <thead>
               <tr>
                 <th>Customer ID</th>
@@ -52,10 +53,10 @@
               <!-- Data inserted by JS -->
             </tbody>
           </table>
-
           <p class="w3-small">
             Status Code: <span id="statusCode">-</span><br>
-            Some text here...
+            ETag: <span id="etagValue">none</span><br>
+            <button class="w3-button w3-dark-grey" onclick="refreshCustomers()">Refresh Customers</button>
           </p>
           <img src="images/shop.jpg" alt="Shop" class="w3-image w3-margin-top" />
         </div>
@@ -63,41 +64,32 @@
 
       <!-- SECOND COLUMN (FORMS) -->
       <div class="w3-col s12 l6">
-
-        <!-- ADD NEW STUDENT -->
-        <div class="w3-card w3-padding w3-margin-bottom"
-             style="background-color: rgba(0,0,0,0.2);">
-          <h4>Add New Student</h4>
-          <table class="w3-table-all w3-hoverable w3-small"
-                 style="background-color: rgba(255,255,255,0.2);">
+        
+        <!-- ADD NEW CUSTOMER -->
+        <div class="w3-card w3-padding w3-margin-bottom" style="background-color: rgba(0,0,0,0.2);">
+          <h4>Add New Customer</h4>
+          <table class="w3-table-all w3-hoverable w3-small" style="background-color: rgba(255,255,255,0.2);">
             <thead style="background-color: rgba(64,64,64,0.6);">
               <tr>
                 <th>Name</th>
                 <th>Birth Date</th>
+                <th>Phone</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>
-                  <input 
-                    class="w3-input w3-border" 
-                    type="text" 
-                    placeholder="Enter Name" 
-                    id="newStudentName"
-                  />
+                  <input class="w3-input w3-border" type="text" placeholder="Enter Name" id="newCustomerName" />
                 </td>
                 <td>
-                  <input 
-                    class="w3-input w3-border" 
-                    type="date" 
-                    id="newStudentBirthDate"
-                  />
+                  <input class="w3-input w3-border" type="date" id="newCustomerBirthDate" />
                 </td>
                 <td>
-                  <button class="w3-button w3-dark-grey" onclick="addStudent()">
-                    Add
-                  </button>
+                  <input class="w3-input w3-border" type="text" placeholder="Enter Phone" id="newCustomerPhone" />
+                </td>
+                <td>
+                  <button class="w3-button w3-dark-grey" onclick="addCustomer()">Add</button>
                   <span class="w3-small" id="addStatus">(Status code here)</span>
                 </td>
               </tr>
@@ -105,61 +97,46 @@
           </table>
         </div>
 
-        <!-- EDIT STUDENT -->
-        <div class="w3-card w3-padding w3-margin-bottom"
-             style="background-color: rgba(0,0,0,0.2);">
-          <h4>Edit Student</h4>
-          <table class="w3-table-all w3-hoverable w3-small"
-                 style="background-color: rgba(255,255,255,0.2);">
+        <!-- EDIT CUSTOMER -->
+        <div class="w3-card w3-padding w3-margin-bottom" style="background-color: rgba(0,0,0,0.2);">
+          <h4>Edit Customer</h4>
+          <table class="w3-table-all w3-hoverable w3-small" style="background-color: rgba(255,255,255,0.2);">
             <thead style="background-color: rgba(64,64,64,0.2);">
               <tr>
                 <th>ID</th>
                 <th>Name</th>
                 <th>Birth Date</th>
+                <th>Phone</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>
-                  <input 
-                    class="w3-input w3-border" 
-                    type="text" 
-                    placeholder="Enter ID" 
-                    id="editStudentId"
-                  />
+                  <input class="w3-input w3-border" type="text" placeholder="Enter ID" id="editCustomerId" />
                 </td>
                 <td>
-                  <input 
-                    class="w3-input w3-border" 
-                    type="text" 
-                    placeholder="Enter New Name" 
-                    id="editStudentName"
-                  />
+                  <input class="w3-input w3-border" type="text" placeholder="Enter New Name" id="editCustomerName" />
                 </td>
                 <td>
-                  <input 
-                    class="w3-input w3-border" 
-                    type="date" 
-                    id="editStudentBirthDate"
-                  />
+                  <input class="w3-input w3-border" type="date" id="editCustomerBirthDate" />
                 </td>
                 <td>
-                  <button class="w3-button w3-dark-grey" onclick="editStudent()">
-                    Edit
-                  </button>
+                  <input class="w3-input w3-border" type="text" placeholder="Enter New Phone" id="editCustomerPhone" />
+                </td>
+                <td>
+                  <button class="w3-button w3-dark-grey" onclick="editCustomer()">Edit</button>
+                  <span class="w3-small" id="editStatus">(Status code here)</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- DELETE STUDENT -->
-        <div class="w3-card w3-padding"
-             style="background-color: rgba(0,0,0,0.2);">
-          <h4>Delete Student</h4>
-          <table class="w3-table-all w3-hoverable w3-small"
-                 style="background-color: rgba(255,255,255,0.2);">
+        <!-- DELETE CUSTOMER -->
+        <div class="w3-card w3-padding" style="background-color: rgba(0,0,0,0.2);">
+          <h4>Delete Customer</h4>
+          <table class="w3-table-all w3-hoverable w3-small" style="background-color: rgba(255,255,255,0.2);">
             <thead style="background-color: rgba(64,64,64,0.2);">
               <tr>
                 <th>ID</th>
@@ -169,39 +146,38 @@
             <tbody>
               <tr>
                 <td>
-                  <input
-                    class="w3-input w3-border"
-                    type="text"
-                    placeholder="Enter ID"
-                    id="deleteStudentId"
-                  />
+                  <input class="w3-input w3-border" type="text" placeholder="Enter ID" id="deleteCustomerId" />
                 </td>
                 <td>
-                  <button class="w3-button w3-dark-grey" onclick="deleteStudent()">
-                    Delete
-                  </button>
+                  <button class="w3-button w3-dark-grey" onclick="deleteCustomer()">Delete</button>
                   <span class="w3-small" id="deleteStatus">(Status code here)</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
+        
       </div> <!-- end second column -->
-
+      
     </div> <!-- end row -->
   </div> <!-- end container -->
-<footer class="w3-container w3-center w3-padding w3-dark-grey">
-  <p>
-    <span id="currentDate"></span> &mdash; 
-    @ This is Only Robots project for 4th year Software Design assignment in Service Oriented Architecture
-  </p>
-</footer>
 
-<script>
-  // Populate the #currentDate span with today's date in a readable format
-  document.getElementById("currentDate").textContent = new Date().toLocaleDateString();
-</script>
+  <footer class="w3-container w3-center w3-padding w3-dark-grey">
+    <p>
+      <span id="currentDate"></span> &mdash; 
+      @ This is Only Robots project for 4th year Software Design assignment in Service Oriented Architecture
+    </p>
+  </footer>
 
+  <!-- Populate the current date -->
+  <script>
+    document.getElementById("currentDate").textContent = new Date().toLocaleDateString();
+  </script>
+
+  <!-- jQuery (required by Toastr) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <!-- Toastr JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  
 </body>
 </html>
