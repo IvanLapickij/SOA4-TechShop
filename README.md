@@ -1,4 +1,4 @@
-![Web application](https://raw.githubusercontent.com/IvanLapickij/SOA4-TechShop/refs/heads/main/Tshop_Customer/Tshop_Customer/src/main/resources/static/images/screenshot1.png?token=GHSAT0AAAAAADASP5HQMTJW75724DN6Z4PEZ6ZOZUA)
+![Web application](https://raw.githubusercontent.com/IvanLapickij/SOA4-TechShop/refs/heads/main/Tshop_Customer/Tshop_Customer/src/main/resources/static/images/screenshot1.png)
 Figure 1. "Only Robots" running web applications.
 
 ONLY 
@@ -12,7 +12,7 @@ This is a 4th-year college project developed in Java using Spring Boot, designed
 ![Spring annotations](https://github.com/IvanLapickij/SOA4-TechShop/blob/main/Tshop_Customer/Tshop_Customer/src/main/resources/static/images/tables.png)
 Figure 2. Image illustrating two tables displayed and Etag generated.
 
-![Spring annotations](https://raw.githubusercontent.com/IvanLapickij/SOA4-TechShop/refs/heads/main/Tshop_Customer/Tshop_Customer/src/main/resources/static/images/spring1.png?token=GHSAT0AAAAAADASP5HRVGUV3WZY5VMVHQAOZ6ZO4CQ)
+![Spring annotations](https://raw.githubusercontent.com/IvanLapickij/SOA4-TechShop/refs/heads/main/Tshop_Customer/Tshop_Customer/src/main/resources/static/images/spring1.png)
 Figure 3. CustomerResource class indicating usage of spring annotations.
 
 
