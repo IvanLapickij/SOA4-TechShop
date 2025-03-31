@@ -1,17 +1,24 @@
 package ie.tus.eng.tshop_services_JPA.customer.model;
 
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Customers {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "custid")  // Lowercase column name
+	@Column(name = "custid")
 	private int custId;
 	
 	@Column(name="custname")
@@ -22,10 +29,14 @@ public class Customers {
 	
 	@Column(name="custphone")
 	private String custPhone;
-	
-	@Column(name="orderid")
-	private int orderId;
 
+	@LastModifiedDate // updated timeStamp
+    private LocalDateTime lastModified;
+
+    public LocalDateTime getLastModified() {
+        return lastModified;
+    }
+	
 	public int getCustId() {
 		return custId;
 	}
@@ -58,21 +69,22 @@ public class Customers {
 		this.custPhone = custPhone;
 	}
 
-	public int getOrderId() {
-		return orderId;
-	}
-
-	public void setOrderId(int orderId) {
-		this.orderId = orderId;
-	}
-
 	@Override
 	public String toString() {
-		return "Customers [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod + ", custPhone=" 
-				+ custPhone + ", orderId=" + orderId + "]";
+		return "Customers [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod + ", custPhone="
+				+ custPhone + "]";
+	}
+
+	public Customers(int custId, String custName, String custBod, String custPhone) {
+		super();
+		this.custId = custId;
+		this.custName = custName;
+		this.custBod = custBod;
+		this.custPhone = custPhone;
 	}
 
 	public Customers() {
 		super();
 	}
+
 }

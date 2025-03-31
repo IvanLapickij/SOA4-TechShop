@@ -1,26 +1,30 @@
+// main.js
+
 // Global variable to store the last known ETag
 let cachedEtag = "";
 
 // -----------------------------
-// 1) Refresh/GET Customers
+// Refresh/GET Customers with Orders
 // -----------------------------
 function refreshCustomers() {
-  fetch("/customers/all-with-orders", {
+  fetch("/customers/techshop", {
     headers: {
       "If-None-Match": cachedEtag
     }
   })
     .then(response => {
+      // Update status code and ETag display
       document.getElementById("statusCode").textContent = response.status;
       const newEtag = response.headers.get("ETag");
       document.getElementById("etagValue").textContent = newEtag || "-";
 
+      // If the response is 304 (Not Modified), notify the user and stop processing
       if (response.status === 304) {
         toastr.info('No new data available (304 Not Modified).', 'Refresh');
         return null;
       }
       if (newEtag) {
-        cachedEtag = newEtag; 
+        cachedEtag = newEtag;
       }
       toastr.success('Data refreshed successfully.', 'Refresh');
       return response.json();
@@ -34,28 +38,44 @@ function refreshCustomers() {
     });
 }
 
-// Helper to populate the table
 function populateTable(customerResponses) {
   const tableBody = document.getElementById("customerTable");
   tableBody.innerHTML = "";
   customerResponses.forEach(cr => {
-    // cr = { custId, custName, custBod, custPhone, orders: { orderId, items, price } }
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${cr.custId}</td>
-      <td>${cr.custName}</td>
-      <td>${cr.custBod}</td>
-      <td>${cr.custPhone}</td>
-      <td>${cr.orders.orderId}</td>
-      <td>${cr.orders.items}</td>
-      <td>${cr.orders.price}</td>
-    `;
-    tableBody.appendChild(row);
+    if (cr.orders && cr.orders.length > 0) {
+      // Loop over each order for this customer and add a row
+      cr.orders.forEach(order => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${cr.custId}</td>
+          <td>${cr.custName}</td>
+          <td>${cr.custBod}</td>
+          <td>${cr.custPhone}</td>
+          <td>${order.orderId}</td>
+          <td>${order.items}</td>
+          <td>${order.price}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    } else {
+      // If the customer has no orders, add a single row with placeholder data.
+      const row = document.createElement("tr");
+      row.innerHTML = `
+          <td>${cr.custId}</td>
+          <td>${cr.custName}</td>
+          <td>${cr.custBod}</td>
+          <td>${cr.custPhone}</td>
+          <td>-</td>
+          <td>No Orders</td>
+          <td>-</td>
+      `;
+      tableBody.appendChild(row);
+    }
   });
 }
 
 // -----------------------------
-// 2) POST: Add a new Customer
+// 2) POST: Add a New Customer
 // -----------------------------
 function addCustomer() {
   const name = document.getElementById("newCustomerName").value;
@@ -65,8 +85,7 @@ function addCustomer() {
   const newCustomer = {
     custName: name,
     custBod: birthDate,
-    custPhone: phone,
-    orderId: 1
+    custPhone: phone
   };
 
   fetch("/customers", {
@@ -80,7 +99,7 @@ function addCustomer() {
       }
       document.getElementById("addStatus").textContent = `(Status: ${response.status})`;
       toastr.success('Customer added successfully!', 'Add');
-      return refreshCustomers();
+      refreshCustomers();
     })
     .catch(error => {
       document.getElementById("addStatus").textContent = "(Error adding customer)";
@@ -104,11 +123,9 @@ function editCustomer() {
   }
 
   const updatedCustomer = {
-    custId: parseInt(id),
     custName: name,
     custBod: birth,
-    custPhone: phone,
-    orderId: 1
+    custPhone: phone
   };
 
   fetch(`/customers/${id}`, {
@@ -160,3 +177,5 @@ function deleteCustomer() {
       console.error(error);
     });
 }
+
+document.addEventListener("DOMContentLoaded", refreshCustomers);

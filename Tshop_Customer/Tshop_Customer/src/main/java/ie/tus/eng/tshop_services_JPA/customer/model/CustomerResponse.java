@@ -1,21 +1,22 @@
 package ie.tus.eng.tshop_services_JPA.customer.model;
 
-import ie.tus.eng.tshop_services_JPA.orders.Orders;
+import java.util.List;
 
+import ie.tus.eng.tshop_services_JPA.orders.Orders;
 public class CustomerResponse {
 
 	private int custId;
 	private String custName;
 	private String custBod;
 	private String custPhone;
-	private Orders orders;
+	private List<Orders> orders; // list that holds orders objects
 	
-	public CustomerResponse(Customers customers, Orders orders) {
-		this.custId = customers.getCustId();
-		this.custName = customers.getCustName();
-		this.custBod = customers.getCustBod();
-		this.custPhone = customers.getCustPhone();
-		this.orders = orders;
+	public CustomerResponse(Customers customers, List<Orders> orders) {
+	    this.custId = customers.getCustId();
+	    this.custName = customers.getCustName();
+	    this.custBod = customers.getCustBod();
+	    this.custPhone = customers.getCustPhone();
+	    this.orders = orders;
 	}
 
 	public int getCustId() {
@@ -50,24 +51,34 @@ public class CustomerResponse {
 		this.custPhone = custPhone;
 	}
 
-	public Orders getOrders() {
+	public List<Orders> getOrders() {
 		return orders;
 	}
 
-	public void setOrders(Orders orders) {
+	public void setOrders(List<Orders> orders) {
 		this.orders = orders;
 	}
 
 	@Override
 	public String toString() {
-		return "CustomerResponse [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod
-				+ ", custPhone=" + custPhone + ", orders=" + orders + "]";
+		return "CustomerResponse [custId=" + custId + ", custName=" + custName + ", custBod=" + custBod + ", custPhone="
+				+ custPhone + ", orders=" + orders + "]";
+	}
+
+	public CustomerResponse(int custId, String custName, String custBod, String custPhone, List<Orders> orders) {
+		super();
+		this.custId = custId;
+		this.custName = custName;
+		this.custBod = custBod;
+		this.custPhone = custPhone;
+		this.orders = orders;
 	}
 
 	public CustomerResponse() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
+
 
 	
 }

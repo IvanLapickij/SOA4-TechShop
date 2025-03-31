@@ -1,157 +1,138 @@
 package ie.tus.eng.tshop_services_JPA.customers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import ie.tus.eng.tshop_services_JPA.customer.model.CustomerResponse;
+import ie.tus.eng.tshop_services_JPA.customer.model.Customers;
+import ie.tus.eng.tshop_services_JPA.orders.Orders;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
+import java.util.stream.Collectors;
 import java.util.List;
-import java.util.Optional;
-
-import ie.tus.eng.tshop_services_JPA.customer.model.CustomerResponse;
-import ie.tus.eng.tshop_services_JPA.customer.model.Customers;
-import ie.tus.eng.tshop_services_JPA.orders.OrdersClient;
 
 @RestController
 @RequestMapping("/customers")
 public class CustomerResource {
 
-    private final CustomerRepository repository;
-    private final OrdersClient ordersClient;
+	private final CustomerRepository repository;
+	private final WebClient webClient;
 
-    // Create an ObjectMapper for JSON
-    private final ObjectMapper objectMapper = new ObjectMapper();
+	@Autowired
+	public CustomerResource(CustomerRepository repository, WebClient webClient) {
+		this.repository = repository;
+		this.webClient = webClient;
+	}
 
-    @Autowired
-    public CustomerResource(CustomerRepository repository, OrdersClient ordersClient) {
-        this.repository = repository;
-        this.ordersClient = ordersClient;
-    }
+	//combined endpoint CUST + ORDERS
+	@GetMapping("/techshop")
+	public Mono<ResponseEntity<Flux<CustomerResponse>>> getAllCustomersWithOrders(
+	    @RequestHeader(name = "If-None-Match", required = false) String ifNoneMatch) {
 
-    // ------------- ETag-enabled endpoint -------------
-    @GetMapping("/all-with-orders")
-    public Mono<ResponseEntity<Flux<CustomerResponse>>> getAllCustomersWithOrders(
-            @RequestHeader(name = "If-None-Match", required = false) String ifNoneMatch) {
+	    // Remove any double quotes from the If-None-Match header (ETag values may include quotes)
+	    if (ifNoneMatch != null) {
+	        ifNoneMatch = ifNoneMatch.replace("\"", "");
+	    }
 
-        return Mono.fromCallable(() -> repository.findAll()) // blocking JPA call
-            .flatMapMany(customers -> Flux.fromIterable(customers))
-            .flatMap(customer ->
-                ordersClient.getOrder(customer.getOrderId())
-                    .map(order -> new CustomerResponse(customer, order))
-            )
-            .collectList() // gather into a List<CustomerResponse>
-            .map(customerResponses -> {
-                // 1) Sort the list to ensure stable ordering
-                customerResponses.sort(Comparator.comparing(CustomerResponse::getCustId));
+	    // Retrieve all customers from the repository, sorted by customer ID for consistent ordering
+	    List<Customers> allCustomers = repository.findAll(Sort.by("custId"));
 
-                // 2) Convert the list to JSON for a stable representation
-                String rawJson;
-                try {
-                    rawJson = objectMapper.writeValueAsString(customerResponses);
-                } catch (Exception e) {
-                    // fallback if JSON fails
-                    rawJson = customerResponses.toString();
-                }
+	    // Build a fingerprint string from all customer IDs and names
+	    String dataFingerprint = allCustomers.stream()
+	        .map(c -> c.getCustId() + "|" + c.getCustName())
+	        .collect(Collectors.joining(","));
+	    
+	    // Generate an MD5 hash of the fingerprint to use as the ETag
+	    String eTag = generateHash(dataFingerprint);
 
-                // 3) Generate a hash (MD5, for example)
-                String etagValue = generateHash(rawJson);
+	    // Log the computed ETag and incoming If-None-Match header for debugging
+	    System.out.println("Computed ETag: " + eTag);
+	    System.out.println("If-None-Match header: " + ifNoneMatch);
 
-                // 4) Compare ETag with If-None-Match
-                if (etagValue.equals(ifNoneMatch)) {
-                    // Data hasn't changed => 304 Not Modified
-                    return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                                         .eTag(etagValue)
-                                         .build();
-                } else {
-                    // Return new data + ETag => 200 OK
-                    return ResponseEntity.ok()
-                                         .eTag(etagValue)
-                                         .body(Flux.fromIterable(customerResponses));
-                }
-            });
-    }
+	    // If the ETag matches the If-None-Match header, return 304 Not Modified (no data change)
+	    if (eTag.equals(ifNoneMatch)) {
+	        return Mono.just(ResponseEntity.status(HttpStatus.NOT_MODIFIED).build());
+	    }
 
-    // ------------- GET: Retrieve All Customers (basic) -------------
-    @GetMapping
-    public Flux<Customers> getAllCustomers() {
-        return Flux.fromIterable(repository.findAll());
-    }
+	    // For each customer, retrieve their orders via the orders service and build a CustomerResponse
+	    Flux<CustomerResponse> responseFlux = Flux.fromIterable(allCustomers)
+	        .flatMap(customer -> webClient.get()
+	            .uri("/orders/customer/{custId}", customer.getCustId())
+	            .retrieve()
+	            .bodyToFlux(Orders.class)
+	            .collectList()
+	            .map(orders -> new CustomerResponse(customer, orders))
+	        );
 
-    // ------------- GET: Retrieve a Single Customer by ID -------------
-    @GetMapping("/{custId}")
-    public Mono<ResponseEntity<CustomerResponse>> getCustomer(@PathVariable int custId) {
-        return Mono.fromCallable(() -> repository.findById(custId))
-            .flatMap(optional -> {
-                if (optional.isEmpty()) {
-                    return Mono.just(ResponseEntity.notFound().build());
-                }
-                Customers customer = optional.get();
-                return ordersClient.getOrder(customer.getOrderId())
-                    .map(order -> new CustomerResponse(customer, order))
-                    .map(ResponseEntity::ok);
-            });
-    }
+	    // Return a 200 OK response with the computed ETag and the customer-orders data
+	    return Mono.just(ResponseEntity.ok().eTag(eTag).body(responseFlux));
+	}
 
-    // ------------- POST: Create a New Customer -------------
-    @PostMapping
-    public Mono<Customers> createCustomer(@RequestBody Customers newCustomer) {
-        return Mono.fromCallable(() -> repository.save(newCustomer));
-    }
+	// GET All Customers (no orders)
+	@GetMapping
+	public Flux<Customers> getAllCustomers() {
+		return Flux.fromIterable(repository.findAll());
+	}
 
-    // ------------- PUT: Update an Existing Customer -------------
-    @PutMapping("/{custId}")
-    public Mono<ResponseEntity<Customers>> updateCustomer(
-            @PathVariable int custId,
-            @RequestBody Customers updatedCustomer) {
+	// GET Customer by ID (no orders)
+	@GetMapping("/{custId}")
+	public Mono<ResponseEntity<Customers>> getCustomer(@PathVariable int custId) {
+		return Mono.fromCallable(() -> repository.findById(custId))
+				.map(optional -> optional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build()));
+	}
 
-        return Mono.fromCallable(() -> repository.findById(custId))
-            .flatMap(optional -> {
-                if (optional.isEmpty()) {
-                    return Mono.just(ResponseEntity.notFound().build());
-                }
-                Customers existing = optional.get();
-                // Update fields
-                existing.setCustName(updatedCustomer.getCustName());
-                existing.setCustBod(updatedCustomer.getCustBod());
-                existing.setCustPhone(updatedCustomer.getCustPhone());
-                existing.setOrderId(updatedCustomer.getOrderId());
-                return Mono.fromCallable(() -> repository.save(existing))
-                           .map(saved -> ResponseEntity.ok(saved));
-            });
-    }
+	// POST - Create Customer
+	@PostMapping
+	public Mono<Customers> createCustomer(@RequestBody Customers newCustomer) {
+		return Mono.fromCallable(() -> repository.save(newCustomer));
+	}
 
-    // ------------- DELETE: Remove a Customer -------------
-    @DeleteMapping("/{custId}")
-    public Mono<ResponseEntity<Void>> deleteCustomer(@PathVariable int custId) {
-        return Mono.fromCallable(() -> repository.findById(custId))
-            .flatMap(optional -> {
-                if (optional.isEmpty()) {
-                    return Mono.just(ResponseEntity.notFound().build());
-                }
-                repository.delete(optional.get());
-                return Mono.just(ResponseEntity.ok().<Void>build());
-            });
-    }
+	// PUT - Update Customer
+	@PutMapping("/{custId}")
+	public Mono<ResponseEntity<Customers>> updateCustomer(@PathVariable int custId,
+			@RequestBody Customers updatedCustomer) {
+		return Mono.fromCallable(() -> repository.findById(custId)).flatMap(optional -> {
+			if (optional.isEmpty()) {
+				return Mono.just(ResponseEntity.notFound().build());
+			}
+			Customers existing = optional.get();
+			existing.setCustName(updatedCustomer.getCustName());
+			existing.setCustBod(updatedCustomer.getCustBod());
+			existing.setCustPhone(updatedCustomer.getCustPhone());
+			return Mono.fromCallable(() -> repository.save(existing)).map(saved -> ResponseEntity.ok(saved));
+		});
+	}
 
-    // ------------- Hash Utility -------------
-    private String generateHash(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            // fallback if MD5 not available
-            return String.valueOf(input.hashCode());
-        }
-    }
+	// DELETE Customer
+	@DeleteMapping("/{custId}")
+	public Mono<ResponseEntity<Void>> deleteCustomer(@PathVariable int custId) {
+		return Mono.fromCallable(() -> repository.findById(custId)).flatMap(optional -> {
+			if (optional.isEmpty()) {
+				return Mono.just(ResponseEntity.notFound().build());
+			}
+			repository.delete(optional.get());
+			return Mono.just(ResponseEntity.ok().<Void>build());
+		});
+	}
+
+	// Utility to generate an MD5 hash (for Etag)
+	private String generateHash(String input) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+			byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+			StringBuilder sb = new StringBuilder();
+			for (byte b : hashBytes) {
+				sb.append(String.format("%02x", b));
+			}
+			return sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			return String.valueOf(input.hashCode());
+		}
+	}
 }

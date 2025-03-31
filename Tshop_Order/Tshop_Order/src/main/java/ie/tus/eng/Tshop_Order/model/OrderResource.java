@@ -36,15 +36,14 @@ private OrderJpaRepository repository;
 			return ResponseEntity.notFound().build();
 		}
 		else {
-			return ResponseEntity.ok(orders.get()); // use dot after response entity to complete lab
+			return ResponseEntity.ok(orders.get());
 		}
 	}
 	
-	//DELETE by ID
+	@GetMapping("/orders/customer/{custId}")
+	public List<Orders> retrieveOrdersByCustId(@PathVariable int custId) {
+	    return repository.findByCustId(custId);
+	}
+
 	
-	//DELETE ALL
-	
-	//POST 
-	
-	//PUT 
 }
