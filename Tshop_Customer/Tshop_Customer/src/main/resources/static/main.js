@@ -1,11 +1,7 @@
-// main.js
-
-// Global variable to store the last known ETag
+// ETag var
 let cachedEtag = "";
 
-// -----------------------------
-// Refresh/GET Customers with Orders
-// -----------------------------
+//Get All customers
 function refreshCustomers() {
   fetch("/customers/techshop", {
     headers: {
@@ -16,7 +12,7 @@ function refreshCustomers() {
       // Update status code and ETag display
       document.getElementById("statusCode").textContent = response.status;
       const newEtag = response.headers.get("ETag");
-      document.getElementById("etagValue").textContent = newEtag || "-";
+      document.getElementById("etagValue").textContent = newEtag || cachedEtag;
 
       // If the response is 304 (Not Modified), notify the user and stop processing
       if (response.status === 304) {
@@ -74,9 +70,7 @@ function populateTable(customerResponses) {
   });
 }
 
-// -----------------------------
-// 2) POST: Add a New Customer
-// -----------------------------
+// POST New Customer
 function addCustomer() {
   const name = document.getElementById("newCustomerName").value;
   const birthDate = document.getElementById("newCustomerBirthDate").value;
@@ -108,9 +102,7 @@ function addCustomer() {
     });
 }
 
-// -----------------------------
-// 3) PUT: Edit a Customer
-// -----------------------------
+// PUT Customer
 function editCustomer() {
   const id = document.getElementById("editCustomerId").value;
   const name = document.getElementById("editCustomerName").value;
@@ -152,9 +144,7 @@ function editCustomer() {
     });
 }
 
-// -----------------------------
-// 4) DELETE: Remove a Customer
-// -----------------------------
+//DELETE Customer
 function deleteCustomer() {
   const id = document.getElementById("deleteCustomerId").value;
   if (!id) {
